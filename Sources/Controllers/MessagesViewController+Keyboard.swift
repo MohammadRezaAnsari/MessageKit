@@ -107,10 +107,6 @@ internal extension MessagesViewController {
 
         let newBottomInset = requiredScrollViewBottomInset(forKeyboardFrame: keyboardEndFrame)
         let differenceOfBottomInset = newBottomInset - messageCollectionViewBottomInset
-
-        UIView.performWithoutAnimation {
-            messageCollectionViewBottomInset = newBottomInset
-        }
         
         if maintainPositionOnKeyboardFrameChanged && differenceOfBottomInset != 0 {
             let contentOffset = CGPoint(x: messagesCollectionView.contentOffset.x, y: messagesCollectionView.contentOffset.y + differenceOfBottomInset)
@@ -120,6 +116,11 @@ internal extension MessagesViewController {
                 return
             }
             messagesCollectionView.setContentOffset(contentOffset, animated: false)
+        }
+        
+        UIView.performWithoutAnimation {
+            // This is important to show the last section when the keyboard did hide. And have to set it after setting content offset.
+            messageCollectionViewBottomInset = newBottomInset
         }
     }
 
