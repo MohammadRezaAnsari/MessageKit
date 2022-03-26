@@ -31,33 +31,43 @@ internal extension MessagesViewController {
     // MARK: - Register / Unregister Observers
 
     func addKeyboardObservers() {
-        NotificationCenter.default.addObserver(self, selector: #selector(MessagesViewController.handleKeyboardDidChangeState(_:)), name: UIResponder.keyboardWillChangeFrameNotification, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(MessagesViewController.handleTextViewDidBeginEditing(_:)), name: UITextView.textDidBeginEditingNotification, object: nil)
+        NotificationCenter.default.addObserver(self,
+                                               selector: #selector(handleKeyboardDidChangeState),
+                                               name: UIResponder.keyboardWillChangeFrameNotification,
+                                               object: nil)
+        
+        NotificationCenter.default.addObserver(self,
+                                               selector: #selector(handleTextViewDidBeginEditing),
+                                               name: UITextView.textDidBeginEditingNotification,
+                                               object: nil)
     }
 
     func removeKeyboardObservers() {
-        NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillChangeFrameNotification, object: nil)
-        NotificationCenter.default.removeObserver(self, name: UITextView.textDidBeginEditingNotification, object: nil)
-        NotificationCenter.default.removeObserver(self, name: UIDevice.orientationDidChangeNotification, object: nil)
+        NotificationCenter.default.removeObserver(self,
+                                                  name: UIResponder.keyboardWillChangeFrameNotification,
+                                                  object: nil)
+        
+        NotificationCenter.default.removeObserver(self,
+                                                  name: UITextView.textDidBeginEditingNotification,
+                                                  object: nil)
+        
+        NotificationCenter.default.removeObserver(self,
+                                                  name: UIDevice.orientationDidChangeNotification,
+                                                  object: nil)
     }
 
     // MARK: - Notification Handlers
 
     @objc
     private func handleTextViewDidBeginEditing(_ notification: Notification) {
-        if scrollsToLastItemOnKeyboardBeginsEditing || scrollsToLastItemOnKeyboardBeginsEditing {
-            guard
-                let inputTextView = notification.object as? InputTextView,
-                inputTextView === messageInputBar.inputTextView
-            else {
-                return
-            }
-            if scrollsToLastItemOnKeyboardBeginsEditing {
-                messagesCollectionView.scrollToLastItem()
-            } else {
-                messagesCollectionView.scrollToLastItem(animated: true)
-            }
-        }
+        guard scrollsToLastItemOnKeyboardBeginsEditing else { return }
+        
+        guard
+            let inputTextView = notification.object as? InputTextView,
+            inputTextView === messageInputBar.inputTextView
+        else { return }
+        
+        messagesCollectionView.scrollToLastItem()
     }
 
     @objc
@@ -97,10 +107,6 @@ internal extension MessagesViewController {
 
         let newBottomInset = requiredScrollViewBottomInset(forKeyboardFrame: keyboardEndFrame)
         let differenceOfBottomInset = newBottomInset - messageCollectionViewBottomInset
-
-        UIView.performWithoutAnimation {
-            messageCollectionViewBottomInset = newBottomInset
-        }
         
         if maintainPositionOnKeyboardFrameChanged && differenceOfBottomInset != 0 {
             let contentOffset = CGPoint(x: messagesCollectionView.contentOffset.x, y: messagesCollectionView.contentOffset.y + differenceOfBottomInset)
@@ -110,6 +116,11 @@ internal extension MessagesViewController {
                 return
             }
             messagesCollectionView.setContentOffset(contentOffset, animated: false)
+        }
+        
+        UIView.performWithoutAnimation {
+            // This is important to show the last section when the keyboard did hide. And have to set it after setting content offset.
+            messageCollectionViewBottomInset = newBottomInset
         }
     }
 
